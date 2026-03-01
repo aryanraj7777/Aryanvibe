@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARYAVARTA | The Ultimate Eternal Archive</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lora:ital,wght@0,400;1,600&family=Mukta:wght@300;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --dark: #050505;
+            --maroon: #580000;
+            --glass: rgba(255, 255, 255, 0.04);
+            --border: rgba(212, 175, 55, 0.3);
+        }
+
+        * { box-sizing: border-box; scroll-behavior: smooth; }
+        body { margin: 0; background: var(--dark); color: #fff; font-family: 'Lora', serif; overflow-x: hidden; }
+
+        /* --- Celestial Background Canvas --- */
+        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+
+        /* --- Navigation --- */
+        nav {
+            position: fixed; top: 0; width: 100%; display: flex; justify-content: center;
+            padding: 15px; background: rgba(0,0,0,0.9); border-bottom: 1px solid var(--gold);
+            z-index: 1000; gap: 10px; backdrop-filter: blur(10px); flex-wrap: wrap;
+        }
+        nav button { 
+            background: none; border: none; color: var(--gold); font-family: 'Cinzel'; 
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; padding: 10px;
+        }
+        nav button:hover, nav button.active { color: #fff; text-shadow: 0 0 10px var(--gold); transform: scale(1.1); }
+
+        /* --- Hero --- */
+        .hero { height: 45vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .hero h1 { font-family: 'Cinzel'; font-size: clamp(2.5rem, 8vw, 5rem); color: var(--gold); margin: 0; letter-spacing: 12px; }
+
+        /* --- Search Bar --- */
+        .search-container { max-width: 600px; margin: -30px auto 40px; position: relative; z-index: 10; padding: 0 20px; }
+        #searchInput {
+            width: 100%; padding: 15px 25px; border-radius: 50px; border: 2px solid var(--gold);
+            background: #111; color: white; font-size: 1rem; outline: none; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        /* --- Content Layout --- */
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; min-height: 60vh; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; }
+        
+        .glass-card {
+            background: var(--glass); border: 1px solid var(--border); border-radius: 15px;
+            padding: 25px; backdrop-filter: blur(10px); transition: 0.4s; animation: fadeIn 0.6s ease;
+        }
+        .glass-card:hover { border-color: var(--gold); transform: translateY(-5px); background: rgba(212,175,55,0.06); }
+        .glass-card h2 { font-family: 'Cinzel'; color: var(--gold); margin-top: 0; font-size: 1.6rem; }
+        .glass-card img { width: 100%; height: 220px; object-fit: cover; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--border); }
+        .tag { background: var(--maroon); font-size: 0.7rem; padding: 3px 10px; border-radius: 4px; text-transform: uppercase; margin-bottom: 10px; display: inline-block; }
+
+        /* --- Nakshatra Calculator --- */
+        .astro-tool { background: rgba(212, 175, 55, 0.1); border: 1px solid var(--gold); padding: 30px; border-radius: 20px; text-align: center; margin-bottom: 50px; }
+        .astro-tool input { padding: 10px; border-radius: 5px; border: 1px solid var(--gold); background: #000; color: #fff; margin: 10px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        footer { text-align: center; padding: 60px; border-top: 1px solid var(--border); font-family: 'Cinzel'; color: var(--gold); margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <nav>
+        <button onclick="renderView('mythology')" id="btn-mythology">Mythology</button>
+        <button onclick="renderView('history')" id="btn-history">History</button>
+        <button onclick="renderView('science')" id="btn-science">Vigyan</button>
+        <button onclick="renderView('strategy')" id="btn-strategy">Strategy</button>
+        <button onclick="renderView('astrology')" id="btn-astrology">Nakshatra</button>
+        <button onclick="renderStatic('mission')">Mission</button>
+        <button onclick="renderStatic('privacy')">Privacy</button>
+    </nav>
+
+    <section class="hero">
+        <h1>ARYAVARTA</h1>
+        <p style="font-family:'Cinzel'; color:var(--gold); letter-spacing: 4px;">Eternal Knowledge of the Cosmos</p>
+    </section>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search the Akasha (e.g. Rama, Zero, Chola)..." onkeyup="liveSearch()">
+    </div>
+
+    <div class="container" id="content-engine">
+        </div>
+
+    <footer>SATYAM EVA JAYATE — THE ARYAVARTA PROJECT</footer>
+
+    <script>
+        // --- 1. CELESTIAL BACKGROUND (p5.js) ---
+        let particles = [];
+        function setup() {
+            let canvas = createCanvas(windowWidth, windowHeight);
+            canvas.parent('canvas-container');
+            for (let i = 0; i < 70; i++) particles.push(new Particle());
+        }
+        function draw() {
+            clear();
+            particles.forEach((p, idx) => {
+                p.update(); p.draw();
+                p.connect(particles.slice(idx));
+            });
+        }
+        class Particle {
+            constructor() { this.pos = createVector(random(width), random(height)); this.vel = createVector(random(-0.4, 0.4), random(-0.4, 0.4)); }
+            update() { 
+                this.pos.add(this.vel); 
+                if (this.pos.x > width || this.pos.x < 0) this.vel.x *= -1;
+                if (this.pos.y > height || this.pos.y < 0) this.vel.y *= -1;
+            }
+            draw() { noStroke(); fill(212, 175, 55, 120); circle(this.pos.x, this.pos.y, 2.5); }
+            connect(others) {
+                others.forEach(o => {
+                    let d = dist(this.pos.x, this.pos.y, o.pos.x, o.pos.y);
+                    if (d < 150) { stroke(212, 175, 55, map(d, 0, 150, 80, 0)); line(this.pos.x, this.pos.y, o.pos.x, o.pos.y); }
+                });
+            }
+        }
+        function windowResized() { resizeCanvas(windowWidth, windowHeight); }
+
+        // --- 2. MASTER DATA ---
+        const portalData = {
+            mythology: [
+                { title: 'The Bhagavad Gita', sub: 'The Song of God', text: '700 verses of spiritual wisdom delivered on the battlefield of Kurukshetra.', tag: 'Itihasa', img: 'https://images.unsplash.com/photo-1590050752117-23a9d5f27918?q=80&w=800' },
+                { title: 'Dashavatara', sub: 'Ten Incarnations', text: 'Tracing the evolution of consciousness through Lord Vishnus avatars.', tag: 'Purana', img: 'https://images.unsplash.com/photo-1582533089852-0243ec2cbb98?q=80&w=800' }
+            ],
+            history: [
+                { title: 'The Maurya Empire', sub: 'Unity of Bharat', text: 'The first great empire to unite almost the entire Indian subcontinent.', tag: 'Empire', img: 'https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?q=80&w=800' },
+                { title: 'Vijayanagara', sub: 'The City of Victory', text: 'A medieval empire that stood as a bulwark for southern Indian culture.', tag: 'Kingdom', img: 'https://images.unsplash.com/photo-1600100397608-f010e423b971?q=80&w=800' }
+            ],
+            science: [
+                { title: 'Brahmasphutasiddhanta', sub: 'The Law of Zero', text: 'Brahmaguptas text defining zero and negative numbers in 628 CE.', tag: 'Math', img: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=800' },
+                { title: 'Sushruta Samhita', sub: 'Vedic Surgery', text: 'Documenting rhinoplasty and 120+ surgical tools in 600 BCE.', tag: 'Medical', img: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?q=80&w=800' }
+            ],
+            strategy: [
+                { title: 'The Mandala Theory', sub: 'Foreign Policy', text: 'Chanakyas strategic circles of friends and enemies to maintain sovereignty.', tag: 'Politics', img: 'https://images.unsplash.com/photo-1610016302534-6f67f1c968d8?q=80&w=800' }
+            ]
+        };
+
+        // --- 3. CORE ENGINE ---
+        function renderView(view) {
+            const container = document.getElementById('content-engine');
+            if(view === 'astrology') { renderAstro(); return; }
+            
+            let html = `<div class="card-grid">`;
+            portalData[view].forEach(item => {
+                html += `
+                    <div class="glass-card">
+                        <span class="tag">${item.tag}</span>
+                        <img src="${item.img}" alt="${item.title}">
+                        <h2>${item.title}</h2>
+                        <h4 style="color:var(--gold); margin:0;">${item.sub}</h4>
+                        <p>${item.text}</p>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function renderAstro() {
+            document.getElementById('content-engine').innerHTML = `
+                <div class="astro-tool">
+                    <h2 style="font-family:'Cinzel'; color:var(--gold);">Vedic Nakshatra Finder</h2>
+                    <p>Ancient Indian Astrology divides the sky into 27 Moon Mansions. Enter your birth day (1-31) to find your symbolic Nakshatra.</p>
+                    <input type="number" id="birthDay" placeholder="Day of Birth (1-31)" min="1" max="31">
+                    <button onclick="calculateNakshatra()" class="glass-card" style="cursor:pointer; padding:10px 20px;">Calculate</button>
+                    <div id="astro-result" style="margin-top:20px; font-size:1.5rem; color:var(--gold);"></div>
+                </div>
+            `;
+        }
+
+        function calculateNakshatra() {
+            const day = document.getElementById('birthDay').value;
+            const nakshatras = ["Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra", "Punarvasu", "Pushya", "Ashlesha", "Magha", "Purva Phalguni", "Uttara Phalguni", "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha", "Jyeshtha", "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta", "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"];
+            const result = nakshatras[(day % 27)];
+            document.getElementById('astro-result').innerText = "Your Symbolic Nakshatra: " + result;
+        }
+
+        function renderStatic(type) {
+            const container = document.getElementById('content-engine');
+            const content = type === 'mission' ? 
+                { h: "The Mission", p: "Aryavarta is a digital portal connecting the youth with the scientific and philosophical depths of Bharat." } : 
+                { h: "Privacy Policy", p: "No cookies. No tracking. Pure knowledge. Your digital journey is anonymous and sacred." };
+            
+            container.innerHTML = `<div class="glass-card" style="max-width:800px; margin:0 auto;"><h2>${content.h}</h2><p>${content.p}</p></div>`;
+        }
+
+        function liveSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const container = document.getElementById('content-engine');
+            let results = [];
+            Object.keys(portalData).forEach(cat => {
+                results = [...results, ...portalData[cat].filter(i => i.title.toLowerCase().includes(query) || i.text.toLowerCase().includes(query))];
+            });
+            container.innerHTML = `<div class="card-grid">` + results.map(i => `<div class="glass-card"><img src="${i.img}"><h2>${i.title}</h2><p>${i.text}</p></div>`).join('') + `</div>`;
+        }
+
+        window.onload = () => renderView('mythology');
+    </script>
+</body>
+</html>
